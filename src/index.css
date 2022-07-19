@@ -7,7 +7,62 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+#app {
+  height: 100vh;
+  width: 100vw;
+  margin: 0;
+  font-family: "IBM Plex Sans", sans-serif;
+}
+
+#FlowFullApp {
+  height: 100vh;
+  width: 100vw;
+  margin: 0;
+  font-family: "IBM Plex Sans", sans-serif;
+}
+
+.replace-button::before {
+  content: "Replace";
+}
+
+.split-button::before {
+  content: "Split";
+}
+
+.expand-button::before {
+  content: "Expand";
+}
+
+.close-button::before {
+  content: "Close";
+}
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.Node_wrapper__3SmT7{
+  background: rgba(91, 96, 99, 0.9);
+}
+
+.Node_wrapper__3SmT7:hover  .Node_label__3MmhF {
+  background: rgb(247, 190, 84);
+}
+
+.export_default {
+background: rgb(237, 238, 182);
+}
+
+.function {
+background: rgb(247, 138, 138);
+}
+
+.start {
+background: rgb(245, 197, 125);
+}
+
+.import {
+background: rgb(206, 168, 255);
+}
+

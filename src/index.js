@@ -2,12 +2,14 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
+import FlowFullApp from './FlowFullApp';
 import reportWebVitals from './reportWebVitals';
+import "react-mosaic-component/react-mosaic-component.css";
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <App />
+    <FlowFullApp />
   </React.StrictMode>
 );
 
