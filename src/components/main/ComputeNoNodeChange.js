@@ -15,18 +15,11 @@ function GetNodeArray(nodes) {
 
 export default function ComputeNoNodeChange(nodesdata) {
  
-    let flowFileParth = "localFiles/app/testFile01_flow.json"
-    let codeFileParth = "localFiles/app/testFile01.js"
+    //let nodes = GetNodeArray(nodesdata)
+    
+    localStorage.setItem( 'codeToDisplay', flowToCode(nodesdata))
 
-    console.log("nodesdata",nodesdata)
-    const fs = window.require('fs')
-    const nodeArray = GetNodeArray(nodesdata)
-   
-    fs.writeFileSync(flowFileParth, JSON.stringify(nodeArray))
-
-    let codeFromFlow = flowToCode(nodeArray)
-
-    fs.writeFileSync(codeFileParth, codeFromFlow)
+    localStorage.setItem( 'nodeSave', JSON.stringify(nodesdata))
 
     return (
         []

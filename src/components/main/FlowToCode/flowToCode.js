@@ -60,6 +60,7 @@ function powerOutNodeToCode(nodes, workingOnNode){
 function notPowerOutNodeToCode(nodes, workingOnNode){
     let codeToAdd = ""
     let numberOfImports = 0
+    console.log("workingOnNode.type", workingOnNode.type)
     // add code before params
     if(workingOnNode.type === "import"){
         // import has a file and an item selected 
@@ -68,32 +69,37 @@ function notPowerOutNodeToCode(nodes, workingOnNode){
         }
     }
 
-    if(workingOnNode.type === "set_variable_with_let"){
+    if(workingOnNode.type === "set variable"){
         // import has a file and an item selected 
         // is there an imput node cionnected
-        if(workingOnNode.connections.inputs.value === undefined) {
-            if(workingOnNode.inputData.value.variable !== "" && workingOnNode.inputData.name.string !== ""){
-                codeToAdd = "let " + workingOnNode.inputData.name.string + " = " + workingOnNode.inputData.value.variable + ";\n"
+
+        //console.log("workingOnNode", workingOnNode)
+
+        if(workingOnNode.connections.inputs.variable === undefined) {
+            if(workingOnNode.inputData.variable.variable !== "" && workingOnNode.inputData.variableName.string !== ""){
+                codeToAdd = "let " + workingOnNode.inputData.variableName.string + " = " + workingOnNode.inputData.variable.variable + ";\n"
             }else{
-                if(workingOnNode.inputData.name.string !== "") {
-                    codeToAdd = "let " + workingOnNode.inputData.name.string + " = undefined;\n"
+                if(workingOnNode.inputData.variableName.string !== "") {
+                    codeToAdd = "let " + workingOnNode.inputData.variableName.string + " = undefined;\n"
                 }            
             }
 
         }else{
-            if(workingOnNode.inputData.name.string !== ""){
+            if(workingOnNode.inputData.variableName.string !== ""){
                 //find the connected node
-                let connectedNodeID = workingOnNode.connections.inputs.value[0].nodeId
+                let connectedNodeID = workingOnNode.connections.inputs.variable[0].nodeId
                 for (let node in nodes){
                     if (nodes[node].id === connectedNodeID){
                         // get the value that it passed back from the other node
+
                         let passedValue = getPassingValue(nodes, nodes[node])
-                        if (passedValue.value !== ""){
+                        if (passedValue.variable !== ""){
+                            //console.log("passedValue",passedValue)
                             if (passedValue.type === "string"){
                                 // if the returning is a string.
-                                codeToAdd = "let " + workingOnNode.inputData.name.string + ' = "' + passedValue.value + '";\n'
+                                codeToAdd = "let " + workingOnNode.inputData.variableName.string + ' = "' + passedValue.value + '";\n'
                             }else{
-                                codeToAdd = "let " + workingOnNode.inputData.name.string + ' = ' + passedValue.value + ';\n'
+                                codeToAdd = "let " + workingOnNode.inputData.variableName.string + ' = ' + passedValue.value + ';\n'
                             }
 
                         }
@@ -120,6 +126,8 @@ function addParramNodesToCode(nodes, workingOnNode){
 
 function getPassingValue(nodes, workingOnNode){
     let resault = {type: "", value: ""}
+
+    
     // get all inputs
     //string
     if(workingOnNode.type === "string"){
@@ -185,8 +193,8 @@ function getPassingValue(nodes, workingOnNode){
     //equal
     if(workingOnNode.type === "equal"){
         resault.type = "boolean"
-        let var1 = 0
-        let var2 = 0
+        let var1 = true
+        let var2 = true
         if (workingOnNode.connections.inputs.variable1 === undefined){
             if(workingOnNode.inputData.variable1.variable !== ""){
                 var1 = workingOnNode.inputData.variable1.variable
@@ -203,9 +211,14 @@ function getPassingValue(nodes, workingOnNode){
         }
 
         if (workingOnNode.connections.inputs.variable2 === undefined){
+            console.log("workingOnNode.inputData.variable2.variable", workingOnNode.inputData.variable2.variable)
             if(workingOnNode.inputData.variable2.variable !== ""){
-                var2 = workingOnNode.inputData.variable2.variable
-            }   
+                if(typeof workingOnNode.inputData.variable2.variable === 'string'){
+                    var2 = '"' + workingOnNode.inputData.variable2.variable + '"'
+                }else{
+                    var2 = workingOnNode.inputData.variable2.variable
+                }
+            }
         }else{
             let connectedNodeID = workingOnNode.connections.inputs.variable2[0].nodeId
             for (let node in nodes){
@@ -216,7 +229,7 @@ function getPassingValue(nodes, workingOnNode){
                 }
             }
         }
-        resault.value = "Number( " + var1 + " ) === Number( "+ var2 + " )"
+        resault.value = "( " + var1 + " === "+ var2 + " )"
     }
         //concatenate
         if(workingOnNode.type === "concatenate"){
@@ -391,6 +404,18 @@ function getPassingValue(nodes, workingOnNode){
                 }
             }           
         }
+        
+        // Get Var
+        if(workingOnNode.type.startsWith('Get variable')){
+            resault.type = "variable"
+            let parentNodeID = workingOnNode.type.slice(13)
+            for (let i in nodes){
+                if(nodes[i].id === parentNodeID){
+                    resault.value =  nodes[i].inputData.variableName.string
+                }
+            }
+        }
+        
 
 
     // return resault

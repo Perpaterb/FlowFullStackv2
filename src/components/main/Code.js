@@ -1,15 +1,13 @@
-import React, {} from "react";
-import MonacoEditor from 'react-monaco-editor'
+import React from "react";
+import Editor from "@monaco-editor/react";
     
 export default function Code(codeFileParth) {
 
-    function handleEditorChange(value, event) {
-        // here is the current value
+    function handleEditorChange(monaco) {
+        // console.log("beforeMount: the monaco instance:", monaco);
     }
-
-    function handleEditorDidMount(editor, monaco) {
-        // console.log("onMount: the editor instance:", editor);
-        // console.log("onMount: the monaco instance:", monaco)
+    function handleEditorDidMount(monaco) {
+        // console.log("beforeMount: the monaco instance:", monaco);
     }
 
     function handleEditorWillMount(monaco) {
@@ -21,9 +19,9 @@ export default function Code(codeFileParth) {
         // markers.forEach(marker => console.log('onValidate:', marker.message));
     }
 
-    return ( 
-        <MonacoEditor
-            height="100%"
+    return (
+        <Editor
+            height="100vh"
             defaultLanguage="javascript"
             value={codeFileParth.fileParth}
             theme="vs-dark"

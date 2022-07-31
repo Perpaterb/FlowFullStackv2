@@ -8021,7 +8021,7 @@ exports.NodeEditor = function NodeEditor(_ref, ref) {
 
   var checkIfPortsExist = function checkIfPortsExist(nodes) {
 
-    console.log(nodes);
+    //console.log(nodes);
     //for each node
     for (var i in nodes) {
       //get outputs
