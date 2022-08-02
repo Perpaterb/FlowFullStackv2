@@ -121,7 +121,7 @@ flowPortAndNodeTypes
       var parameterCount = 1
       let inputPorts = [
       ports.export({label: "Export", name: "export"}),
-      //ports.power({label: "Power", name: "powerIn"}),
+      ports.power({label: "Power", name: "powerIn"}),
       ports.string({label: "function name", name: "functionName",hidePort: true})
       ]
       
@@ -566,8 +566,8 @@ flowPortAndNodeTypes
     label: "concatenate",
     description: "Join 2 string together",
     inputs: ports => [
-      ports.string({name: "string1", label: "string 1"}),
-      ports.string({name: "string2", label: "string 2"}),
+      ports.string({name: "string1", label: "string 1", noControls: true}),
+      ports.string({name: "string2", label: "string 2", noControls: true}),
     ],
     outputs: ports => [
       ports.string({label: "stringout", name: "string out"}),

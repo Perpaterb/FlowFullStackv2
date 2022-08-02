@@ -16,6 +16,8 @@ function GetNodeArray(nodes) {
 export default function ComputeNoNodeChange(nodesdata) {
  
     //let nodes = GetNodeArray(nodesdata)
+
+    //console.log("nodesdata",nodesdata)
     
     localStorage.setItem( 'codeToDisplay', flowToCode(nodesdata))
 

@@ -39,9 +39,33 @@ function startNodeToCode(nodes){
 }
 
 function powerOutNodeToCode(nodes, workingOnNode){
+    let codeToAdd = ""
+    console.log("node is conected to start and is in the power out list", workingOnNode.type)
+    console.log("workingOnNode", workingOnNode)
+    
+
+        if(workingOnNode.type === "function"){
+            if(workingOnNode.inputData.functionName.string !== ""){
+                if (workingOnNode.inputData.export.boolean) {
+                    codeToAdd = "export default " 
+                }
+                codeToAdd =  codeToAdd.concat("function " +workingOnNode.inputData.functionName.string + '(')
+                let funcParams = []
+                for(let inputs in workingOnNode.inputData){
+                    if (inputs.startsWith("Parameter") && workingOnNode.inputData[inputs].string !== "" ) {
+                        funcParams.push(' ' + workingOnNode.inputData[inputs].string)
+                    }
+                }
+                codeToAdd =  codeToAdd.concat(funcParams + ') { \n')
+
+                
+            }
+        }
+    
+
     // if not "function" 
         // add code before params
-        console.log("node is conected to start and is in the power out list", workingOnNode.type)
+        
         // for each node connected to params
             // run addParramNodesToCode(id)
 
@@ -54,13 +78,18 @@ function powerOutNodeToCode(nodes, workingOnNode){
         // else
             // run notPowerOutNodeToCode(id)
     // add code after params
-    // add close }    
+    // add close }
+    codeToAdd =  codeToAdd.concat('}')  
+    return codeToAdd
 }
 
 function notPowerOutNodeToCode(nodes, workingOnNode){
     let codeToAdd = ""
     let numberOfImports = 0
-    console.log("workingOnNode.type", workingOnNode.type)
+    
+    //console.log("workingOnNode.type", workingOnNode.type)
+
+
     // add code before params
     if(workingOnNode.type === "import"){
         // import has a file and an item selected 
@@ -70,7 +99,7 @@ function notPowerOutNodeToCode(nodes, workingOnNode){
     }
 
     if(workingOnNode.type === "set variable"){
-        // import has a file and an item selected 
+        
         // is there an imput node cionnected
 
         //console.log("workingOnNode", workingOnNode)
@@ -196,7 +225,9 @@ function getPassingValue(nodes, workingOnNode){
         let var1 = true
         let var2 = true
         if (workingOnNode.connections.inputs.variable1 === undefined){
-            if(workingOnNode.inputData.variable1.variable !== ""){
+            if(typeof workingOnNode.inputData.variable1.variable === 'string'){
+                var1 = '"' + workingOnNode.inputData.variable1.variable + '"'
+            }else{
                 var1 = workingOnNode.inputData.variable1.variable
             }
         }else{
@@ -211,7 +242,6 @@ function getPassingValue(nodes, workingOnNode){
         }
 
         if (workingOnNode.connections.inputs.variable2 === undefined){
-            console.log("workingOnNode.inputData.variable2.variable", workingOnNode.inputData.variable2.variable)
             if(workingOnNode.inputData.variable2.variable !== ""){
                 if(typeof workingOnNode.inputData.variable2.variable === 'string'){
                     var2 = '"' + workingOnNode.inputData.variable2.variable + '"'
@@ -233,7 +263,7 @@ function getPassingValue(nodes, workingOnNode){
     }
         //concatenate
         if(workingOnNode.type === "concatenate"){
-            resault.type = "string"
+            resault.type = "variable"
             let string1 = ""
             let string2 = ""        
             if (workingOnNode.connections.inputs.string1 === undefined){
@@ -353,7 +383,7 @@ function getPassingValue(nodes, workingOnNode){
         
         //upper case first
         if(workingOnNode.type === "upper_case_first"){
-            resault.type = "string"
+            resault.type = "variable"
             resault.value = ""
             if (workingOnNode.connections.inputs.string !== undefined) {
                 let connectedNodeID = workingOnNode.connections.inputs.string[0].nodeId
@@ -371,7 +401,7 @@ function getPassingValue(nodes, workingOnNode){
 
         //upper case all
         if(workingOnNode.type === "upper_case_all"){
-            resault.type = "string"
+            resault.type = "variable"
             resault.value = ""
             if (workingOnNode.connections.inputs.string !== undefined) {
                 let connectedNodeID = workingOnNode.connections.inputs.string[0].nodeId
@@ -389,7 +419,7 @@ function getPassingValue(nodes, workingOnNode){
 
         //trim
         if(workingOnNode.type === "trim"){
-            resault.type = "string"
+            resault.type = "variable"
             resault.value = ""
             if (workingOnNode.connections.inputs.string !== undefined) {
                 let connectedNodeID = workingOnNode.connections.inputs.string[0].nodeId
@@ -406,7 +436,7 @@ function getPassingValue(nodes, workingOnNode){
         }
         
         // Get Var
-        if(workingOnNode.type.startsWith('Get variable')){
+        if(workingOnNode.type.startsWith('get variable')){
             resault.type = "variable"
             let parentNodeID = workingOnNode.type.slice(13)
             for (let i in nodes){

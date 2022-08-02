@@ -29,6 +29,8 @@ const FlowFullApp = () => {
      nodes = JSON.parse(localStorage.getItem( 'nodeSave' ))
   }
 
+  //console.log("nodes", nodes)
+
   useEffect(() => {
     window.addEventListener("click", () => {
       setCodeToDisplay(localStorage.getItem('codeToDisplay'))

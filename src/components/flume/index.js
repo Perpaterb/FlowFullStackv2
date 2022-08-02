@@ -4604,7 +4604,7 @@ var Stage = function Stage(_ref) {
 
       var variableNameList = [];
       for (var _i2 in variableList) {
-        console.log(variableList);
+        //console.log(variableList)
         variableNameList.push({ label: variableList[_i2].inputData.variableName.string, value: variableList[_i2].inputData.variableName.string, description: "", sortIndex: _i2, node: { label: "get variable " + variableList[_i2].inputData.variableName.string, value: "get variable " + variableList[_i2].inputData.variableName.string, details: variableList[_i2] } });
       }
 
@@ -4618,7 +4618,7 @@ var Stage = function Stage(_ref) {
       setMenuOptions(functionNameList);
     } else if (node.label.startsWith("call function ")) {
 
-      console.log("create CALL_FUNCTION node :", node.details);
+      //console.log("create CALL_FUNCTION node :", node.details)
 
       dispatchNodes({
         type: "ADD_CALL_FUNCTION_NODE",
@@ -4631,7 +4631,7 @@ var Stage = function Stage(_ref) {
       setMenuOpen(false);
     } else if (node.label.startsWith("get variable ")) {
 
-      console.log("create GET_VARIABLE node :", node.details);
+      //console.log("create GET_VARIABLE node :", node.details)
 
       dispatchNodes({
         type: "ADD_GET_VARIABLE_NODE",
@@ -4650,7 +4650,8 @@ var Stage = function Stage(_ref) {
       setMenuOpen(false);
       setMenuOptions(menuOptionsStage1stRight);
 
-      console.log("create this node", node);
+      //console.log("create this node", node)
+
       //end perp edit
       dispatchNodes({
         type: "ADD_NODE",
@@ -6213,7 +6214,7 @@ var Node = function Node(_ref) {
     currentNodeType.description = "This node will call the function " + nodeParent.inputData.functionName.string;
 
     currentNodeType.inputs = createdInputs(nodeParent);
-  } else if (type.startsWith("Get variable ")) {
+  } else if (type.startsWith("get variable ")) {
     var _nodeParentID = type.slice(13);
     var _nodeParent = "";
 
@@ -7369,6 +7370,26 @@ var getInitialNodes = function getInitialNodes() {
   var portTypes = arguments[3];
   var context = arguments[4];
 
+
+  //perp edit start
+  //Add the custome nodes to the nodeTypes var
+  // without this getDefaultData and reconcileNodes will brake evrything.
+
+  for (var i in initialNodes) {
+    if (initialNodes[i].type.startsWith("get variable")) {
+      var getVarTypeCopy = _extends({}, nodeTypes["get variable"]);
+      getVarTypeCopy.type = initialNodes[i].type;
+      nodeTypes[initialNodes[i].type] = getVarTypeCopy;
+    }
+    if (initialNodes[i].type.startsWith("call function ")) {
+      var callFuncTypeCopy = _extends({}, nodeTypes["Call function"]);
+      callFuncTypeCopy.type = initialNodes[i].type;
+      nodeTypes[initialNodes[i].type] = callFuncTypeCopy;
+    }
+  }
+
+  //perp edit end 
+
   var reconciledNodes = reconcileNodes(initialNodes, nodeTypes, portTypes, context);
 
   return _extends({}, reconciledNodes, defaultNodes.reduce(function (nodes, dNode, i) {
@@ -7395,6 +7416,7 @@ var getDefaultData = function getDefaultData(_ref5) {
       portTypes = _ref5.portTypes,
       context = _ref5.context;
 
+
   var inputs = Array.isArray(nodeType.inputs) ? nodeType.inputs : nodeType.inputs(node.inputData, node.connections, context);
   return inputs.reduce(function (obj, input) {
     var inputType = portTypes[input.type];
@@ -7415,6 +7437,7 @@ var nodesReducer = function nodesReducer(nodes) {
       circularBehavior = _ref6.circularBehavior,
       context = _ref6.context;
   var dispatchToasts = arguments[3];
+
 
   switch (action.type) {
     case "ADD_CONNECTION":
@@ -7565,7 +7588,7 @@ var nodesReducer = function nodesReducer(nodes) {
           id: _newNodeId2,
           x: _x5,
           y: _y2,
-          type: "Get variable " + _nodeType2.id,
+          type: "get variable " + _nodeType2.id,
           width: 200,
           connections: {
             inputs: {},
@@ -8021,7 +8044,7 @@ exports.NodeEditor = function NodeEditor(_ref, ref) {
 
   var checkIfPortsExist = function checkIfPortsExist(nodes) {
 
-    //console.log(nodes);
+    //console.log(nodes)
     //for each node
     for (var i in nodes) {
       //get outputs
@@ -8046,10 +8069,10 @@ exports.NodeEditor = function NodeEditor(_ref, ref) {
                   if (nodes[parentNode].id === nodeParentID) {
                     //find the parent of the call function node
                     for (var p in nodes[parentNode].inputData) {
-                      console.log("p", p);
+                      //console.log("p",p)
                       //get paramiters 
                       if (p.startsWith("Parameter")) {
-                        console.log("nodes[parentNode].inputData[p].string: ", nodes[parentNode].inputData[p].string);
+                        //console.log("nodes[parentNode].inputData[p].string: ", nodes[parentNode].inputData[p].string)
                         // if the parent has a paramiter that the First node is connecting to then the connection is valid
                         if (nodes[parentNode].inputData[p].string !== nodes[i].connections.outputs[outs][connection].portName) ;
                       }
