@@ -18,7 +18,7 @@ const FlowFullApp = () => {
   
   let comments = { }  
   const filesName = "testFile01.js"
-  const defaultNodes = [{"x":-360,"y":-250,"type":"start","width":200,"connections":{"inputs":{},"outputs":{}},"inputData":{},"id":"8IJs8RNJFP"},{"x":700,"y":-250,"type":"export_default","width":200,"connections":{"inputs":{},"outputs":{}},"inputData":{},"id":"nxhnI9V4w9"}]
+  const defaultNodes = [{"x":-360,"y":-250,"type":"start","width":200,"connections":{"inputs":{},"outputs":{}},"inputData":{},"id":"8IJs8RNJFP"}]
   let nodes = defaultNodes
 
   //console.log("JSON.parse(localStorage.getItem( 'nodeSave' ))",JSON.parse(localStorage.getItem( 'nodeSave' )))

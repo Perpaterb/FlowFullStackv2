@@ -1,10 +1,13 @@
+import { FOCUSABLE_SELECTOR } from "@testing-library/user-event/dist/utils"
 
 const powerOutNodeList = [
     "function",
     "if",
-    "callFunction",
+    //"call Function",
     "start",
 ] 
+
+let indentationLevel = 0
 
 // add code for everything not in functions
 function startNodeToCode(nodes){
@@ -40,46 +43,58 @@ function startNodeToCode(nodes){
 
 function powerOutNodeToCode(nodes, workingOnNode){
     let codeToAdd = ""
-    console.log("node is conected to start and is in the power out list", workingOnNode.type)
-    console.log("workingOnNode", workingOnNode)
-    
+    indentationLevel += 1
 
+    //console.log("node is conected to start and is in the power out list", workingOnNode.type)
+    //console.log("workingOnNode", workingOnNode)
+    
+        // if not "function"
         if(workingOnNode.type === "function"){
-            if(workingOnNode.inputData.functionName.string !== ""){
+            if(workingOnNode.inputData.functionName.userInput !== ""){
+                // add code before params
                 if (workingOnNode.inputData.export.boolean) {
                     codeToAdd = "export default " 
                 }
-                codeToAdd =  codeToAdd.concat("function " +workingOnNode.inputData.functionName.string + '(')
+                codeToAdd =  codeToAdd.concat("function " +workingOnNode.inputData.functionName.userInput + '(')
                 let funcParams = []
+                // for each node connected to params
                 for(let inputs in workingOnNode.inputData){
-                    if (inputs.startsWith("Parameter") && workingOnNode.inputData[inputs].string !== "" ) {
-                        funcParams.push(' ' + workingOnNode.inputData[inputs].string)
+                    if (inputs.startsWith("Parameter") && workingOnNode.inputData[inputs].userInput !== "" ) {
+                        funcParams.push(' ' + workingOnNode.inputData[inputs].userInput)
                     }
                 }
+                // add Open {
                 codeToAdd =  codeToAdd.concat(funcParams + ') { \n')
-
-                
+            
+                // for each node connected this node
+                for (let outs in workingOnNode.connections.outputs) {
+                    
+                    if (outs.startsWith('power')){
+                        if (workingOnNode.connections.outputs[outs][0] !== undefined){
+                        //console.log("outs",workingOnNode.connections.outputs[outs][0].nodeId)
+                            let connectedNodeID = workingOnNode.connections.outputs[outs][0].nodeId
+                            for (let node in nodes){
+                                if (nodes[node].id === connectedNodeID){
+                                    // if node is in the powerOutNodeList
+                                    if (powerOutNodeList.includes(nodes[node].type)){
+                                        codeToAdd =  codeToAdd.concat("\t".repeat(indentationLevel) + powerOutNodeToCode(nodes, nodes[node]))
+                                    // else
+                                    } else{
+                                        codeToAdd =  codeToAdd.concat("\t".repeat(indentationLevel) + notPowerOutNodeToCode(nodes, nodes[node]))
+                                    }
+                                }
+                            }
+                        }
+                    }
+            
+                }
+                // add close }  
             }
+            codeToAdd =  codeToAdd.concat('}\n')  
         }
-    
 
-    // if not "function" 
-        // add code before params
+    indentationLevel -= 1
         
-        // for each node connected to params
-            // run addParramNodesToCode(id)
-
-        // add Open {
-
-    
-    // for each node connected this node
-        // if node is in the powerOutNodeList
-            // run powerOutNodeToCode(id)
-        // else
-            // run notPowerOutNodeToCode(id)
-    // add code after params
-    // add close }
-    codeToAdd =  codeToAdd.concat('}')  
     return codeToAdd
 }
 
@@ -87,7 +102,7 @@ function notPowerOutNodeToCode(nodes, workingOnNode){
     let codeToAdd = ""
     let numberOfImports = 0
     
-    //console.log("workingOnNode.type", workingOnNode.type)
+    // console.log("workingOnNode.type", workingOnNode.type)
 
 
     // add code before params
@@ -102,33 +117,34 @@ function notPowerOutNodeToCode(nodes, workingOnNode){
         
         // is there an imput node cionnected
 
-        //console.log("workingOnNode", workingOnNode)
+        // console.log("workingOnNode", workingOnNode)
 
         if(workingOnNode.connections.inputs.variable === undefined) {
-            if(workingOnNode.inputData.variable.variable !== "" && workingOnNode.inputData.variableName.string !== ""){
-                codeToAdd = "let " + workingOnNode.inputData.variableName.string + " = " + workingOnNode.inputData.variable.variable + ";\n"
+            if(workingOnNode.inputData.variable.variable !== "" && workingOnNode.inputData.variableName.userInput !== ""){
+                codeToAdd = "let " + workingOnNode.inputData.variableName.userInput + " = " + workingOnNode.inputData.variable.variable + ";\n"
             }else{
                 if(workingOnNode.inputData.variableName.string !== "") {
-                    codeToAdd = "let " + workingOnNode.inputData.variableName.string + " = undefined;\n"
+                    codeToAdd = "let " + workingOnNode.inputData.variableName.userInput + " = undefined;\n"
                 }            
             }
 
         }else{
-            if(workingOnNode.inputData.variableName.string !== ""){
+            if(workingOnNode.inputData.variableName.userInput !== ""){
                 //find the connected node
                 let connectedNodeID = workingOnNode.connections.inputs.variable[0].nodeId
+                let connectedPort = workingOnNode.connections.inputs.variable[0].portName
                 for (let node in nodes){
                     if (nodes[node].id === connectedNodeID){
                         // get the value that it passed back from the other node
 
-                        let passedValue = getPassingValue(nodes, nodes[node])
-                        if (passedValue.variable !== ""){
+                        let passedValue = getPassingValue(nodes, nodes[node], connectedPort)
+                        if (passedValue.value !== ""){
                             //console.log("passedValue",passedValue)
                             if (passedValue.type === "string"){
                                 // if the returning is a string.
-                                codeToAdd = "let " + workingOnNode.inputData.variableName.string + ' = "' + passedValue.value + '";\n'
+                                codeToAdd = "let " + workingOnNode.inputData.variableName.userInput + ' = "' + passedValue.value + '";\n'
                             }else{
-                                codeToAdd = "let " + workingOnNode.inputData.variableName.string + ' = ' + passedValue.value + ';\n'
+                                codeToAdd = "let " + workingOnNode.inputData.variableName.userInput + ' = ' + passedValue.value + ';\n'
                             }
 
                         }
@@ -138,11 +154,131 @@ function notPowerOutNodeToCode(nodes, workingOnNode){
         }
     }
 
-    
-    // add code before params
-    // for each node connected to params
-        // run addParramNodesToCode(id)
-    // add code after params
+    // call function from power
+    if(workingOnNode.type.startsWith("call function ")){
+        let parentNodeID = workingOnNode.type.slice(14)
+        let paramArray = []
+        
+        for (let node in nodes){
+            if (nodes[node].id === parentNodeID){
+                let functionName = nodes[node].inputData.functionName.userInput
+                codeToAdd = functionName +  '('
+
+                for (let paramsNames in nodes[node].inputData){
+                    if (paramsNames.startsWith("Parameter")){
+                        if (nodes[node].inputData[paramsNames].userInput != ''){
+                            paramArray.push(nodes[node].inputData[paramsNames].userInput)
+                        }
+
+                    }
+                }
+
+                //console.log("odes[node]", nodes[node].inputData)
+            }
+        }
+        //console.log("workingOnNode", workingOnNode)
+        for (let param in paramArray){
+            let paramFound = false 
+            for (let inputs in workingOnNode.connections.inputs){
+                if(inputs === paramArray[param]){
+                    paramFound = true
+
+                    let connectedNodeID = workingOnNode.connections.inputs[inputs][0].nodeId
+                    let connectedPort = workingOnNode.connections.inputs[inputs][0].portName
+
+                    //console.log("connectedNodeID", connectedNodeID)
+                    for (let node in nodes){
+                        if (nodes[node].id === connectedNodeID){
+
+                            // get the value that it passed back from the other node
+
+                            let passedValue = getPassingValue(nodes, nodes[node], connectedPort)
+                            //console.log("passedValue.variable", passedValue)
+                            if (passedValue.value !== ""){
+                                if (passedValue.type === "string"){
+                                    // if the returning is a string.
+                                    codeToAdd = codeToAdd + ' "' + passedValue.value + '"",'
+                                }else{
+                                    codeToAdd = codeToAdd + ' ' + passedValue.value + ','
+                                }
+
+                            }
+                        }
+                    }
+
+                }
+            }
+            if (paramFound === false){
+
+                codeToAdd = codeToAdd + ' null,'
+            }
+        }
+        if (paramArray.length > 0){
+            codeToAdd = codeToAdd.slice(0, -1) + " );\n"
+        } else {
+            codeToAdd = codeToAdd + " );\n"
+        }
+    }
+
+    //console log
+    if(workingOnNode.type === "console.log"){
+        // Node This needs to run in order of string number connection time.
+        codeToAdd = "console.log( "
+        let passedValue = []
+
+        let reorder = []
+        for (let order in workingOnNode.connections.inputs){
+            if (order.startsWith('string')){
+                reorder.push([order, workingOnNode.connections.inputs[order][0]])
+
+            }
+        }
+        reorder.sort(function(a, b){
+            return a[0].slice(6) - b[0].slice(6)
+        })
+
+        for (let ins in reorder) {
+                //console.log("workingOnNode.connections.inputs" ,workingOnNode.connections.inputs[ins][0])
+                let connectedNodeID = reorder[ins][1].nodeId
+                let connectedPort = reorder[ins][1].portName
+                for (let node in nodes){
+                    if (nodes[node].id === connectedNodeID){
+                        // get the value that it passed back from the other node
+                        passedValue.push(getPassingValue(nodes, nodes[node], connectedPort))
+                    }
+                }
+
+        }
+        for (let outs in passedValue){
+            codeToAdd = codeToAdd + passedValue[outs].value + ', '
+        }
+
+        codeToAdd = codeToAdd.slice(0, -1).slice(0, -1) + ');\n'
+
+
+        //console.log("passedValue" ,passedValue)
+
+        // if (workingOnNode.connections.inputs.number1 === undefined){
+        //     if(workingOnNode.inputData.number1.number !== ""){
+        //         var1 = workingOnNode.inputData.number1.number
+        //     }
+        // }else{
+        //     let connectedNodeID = workingOnNode.connections.inputs.number1[0].nodeId
+        //     let connectedPort = workingOnNode.connections.inputs.number1[0].portName
+        //     for (let node in nodes){
+        //         if (nodes[node].id === connectedNodeID){
+        //             // get the value that it passed back from the other node
+        //             let passedValue = getPassingValue(nodes, nodes[node], connectedPort)
+        //             var1 = passedValue.value
+        //         }
+        //     }
+        // }
+ 
+        // if(workingOnNode.inputData.item.item.length > 0 && workingOnNode.inputData.from.file !== ""){
+        //     codeToAdd = "import { " + workingOnNode.inputData.item.item.join(", ") + " } from " + workingOnNode.inputData.from.file + ";\n"
+        // }
+    }
+
 
     return codeToAdd
 }
@@ -153,11 +289,12 @@ function addParramNodesToCode(nodes, workingOnNode){
         // run addParramNodesToCode(id)
 }
 
-function getPassingValue(nodes, workingOnNode){
+function getPassingValue(nodes, workingOnNode, connectedPort){
     let resault = {type: "", value: ""}
 
     
     // get all inputs
+
     //string
     if(workingOnNode.type === "string"){
         resault.type = "string"
@@ -165,20 +302,13 @@ function getPassingValue(nodes, workingOnNode){
     }
 
     //integer
-    if(workingOnNode.type === "integer"){
-        resault.type = "integer"
-        if(workingOnNode.connections.inputs.variable === undefined) {
-            resault.value = workingOnNode.inputData.variable.variable
+    if(workingOnNode.type === "number"){
+        resault.type = "number"
+        //console.log("workingOnNode" ,workingOnNode)
+        if(workingOnNode.inputData.userInput.userInput === '') {
+            resault.value = "null"
         }else {
-            // prosess inputs
-            let connectedNodeID = workingOnNode.connections.inputs.variable[0].nodeId
-            for (let node in nodes){
-                if (nodes[node].id === connectedNodeID){
-                    // get the value that it passed back from the other node
-                    let passedValue = getPassingValue(nodes, nodes[node])
-                    resault.value = passedValue.value
-                }
-            }
+            resault.value = workingOnNode.inputData.userInput.userInput
         }
     }
 
@@ -187,36 +317,38 @@ function getPassingValue(nodes, workingOnNode){
         resault.type = "integer"
         let var1 = 0
         let var2 = 0
-        if (workingOnNode.connections.inputs.variable1 === undefined){
-            if(workingOnNode.inputData.variable1.variable !== ""){
-                var1 = workingOnNode.inputData.variable1.variable
+        if (workingOnNode.connections.inputs.number1 === undefined){
+            if(workingOnNode.inputData.number1.number !== ""){
+                var1 = workingOnNode.inputData.number1.number
             }
         }else{
-            let connectedNodeID = workingOnNode.connections.inputs.variable1[0].nodeId
+            let connectedNodeID = workingOnNode.connections.inputs.number1[0].nodeId
+            let connectedPort = workingOnNode.connections.inputs.number1[0].portName
             for (let node in nodes){
                 if (nodes[node].id === connectedNodeID){
                     // get the value that it passed back from the other node
-                    let passedValue = getPassingValue(nodes, nodes[node])
+                    let passedValue = getPassingValue(nodes, nodes[node], connectedPort)
                     var1 = passedValue.value
                 }
             }
         }
 
-        if (workingOnNode.connections.inputs.variable2 === undefined){
-            if(workingOnNode.inputData.variable2.variable !== ""){
-                var2 = workingOnNode.inputData.variable2.variable
+        if (workingOnNode.connections.inputs.number2 === undefined){
+            if(workingOnNode.inputData.number2.number !== ""){
+                var2 = workingOnNode.inputData.number2.number
             }   
         }else{
-            let connectedNodeID = workingOnNode.connections.inputs.variable2[0].nodeId
+            let connectedNodeID = workingOnNode.connections.inputs.number2[0].nodeId
+            let connectedPort = workingOnNode.connections.inputs.number2[0].portName
             for (let node in nodes){
                 if (nodes[node].id === connectedNodeID){
                     // get the value that it passed back from the other node
-                    let passedValue = getPassingValue(nodes, nodes[node])
+                    let passedValue = getPassingValue(nodes, nodes[node], connectedPort)
                     var2 = passedValue.value
                 }
             }
         }
-        resault.value = "Number( " + var1 + " ) + Number( " + var2 + " )"
+        resault.value = '(' +var1 + " + " + var2 + ')'
     }
 
     //equal
@@ -232,10 +364,11 @@ function getPassingValue(nodes, workingOnNode){
             }
         }else{
             let connectedNodeID = workingOnNode.connections.inputs.variable1[0].nodeId
+            let connectedPort = workingOnNode.connections.inputs.variable1[0].portName
             for (let node in nodes){
                 if (nodes[node].id === connectedNodeID){
                     // get the value that it passed back from the other node
-                    let passedValue = getPassingValue(nodes, nodes[node])
+                    let passedValue = getPassingValue(nodes, nodes[node], connectedPort)
                     var1 = passedValue.value
                 }
             }
@@ -251,10 +384,11 @@ function getPassingValue(nodes, workingOnNode){
             }
         }else{
             let connectedNodeID = workingOnNode.connections.inputs.variable2[0].nodeId
+            let connectedPort = workingOnNode.connections.inputs.variable2[0].portName
             for (let node in nodes){
                 if (nodes[node].id === connectedNodeID){
                     // get the value that it passed back from the other node
-                    let passedValue = getPassingValue(nodes, nodes[node])
+                    let passedValue = getPassingValue(nodes, nodes[node], connectedPort)
                     var2 = passedValue.value
                 }
             }
@@ -272,10 +406,11 @@ function getPassingValue(nodes, workingOnNode){
                 }
             }else{
                 let connectedNodeID = workingOnNode.connections.inputs.string1[0].nodeId
+                let connectedPort = workingOnNode.connections.inputs.string1[0].portName
                 for (let node in nodes){
                     if (nodes[node].id === connectedNodeID){
                         // get the value that it passed back from the other node
-                        let passedValue = getPassingValue(nodes, nodes[node])
+                        let passedValue = getPassingValue(nodes, nodes[node], connectedPort)
                         string1 = passedValue.value
                     }
                 }
@@ -287,10 +422,11 @@ function getPassingValue(nodes, workingOnNode){
                 }   
             }else{
                 let connectedNodeID = workingOnNode.connections.inputs.string2[0].nodeId
+                let connectedPort = workingOnNode.connections.inputs.string2[0].portName
                 for (let node in nodes){
                     if (nodes[node].id === connectedNodeID){
                         // get the value that it passed back from the other node
-                        let passedValue = getPassingValue(nodes, nodes[node])
+                        let passedValue = getPassingValue(nodes, nodes[node], connectedPort)
                         string2 = passedValue.value
                     }
                 }
@@ -312,10 +448,11 @@ function getPassingValue(nodes, workingOnNode){
 
             for(let i in workingOnNode.connections.inputs){
                 let connectedNodeID = workingOnNode.connections.inputs[i][0].nodeId
+                let connectedPort = workingOnNode.connections.inputs[i][0].portName
                 for (let node in nodes){
                     if (nodes[node].id === connectedNodeID){
                         // get the value that it passed back from the other node
-                        let passedValue = getPassingValue(nodes, nodes[node])
+                        let passedValue = getPassingValue(nodes, nodes[node], connectedPort)
                         let index = i.charAt(i.length - 1)-1
                         array[index] = passedValue.value
                     }
@@ -349,10 +486,11 @@ function getPassingValue(nodes, workingOnNode){
 
             for(let i in workingOnNode.connections.inputs){
                 let connectedNodeID = workingOnNode.connections.inputs[i][0].nodeId
+                let connectedPort = workingOnNode.connections.inputs[i][0].portName
                 for (let node in nodes){
                     if (nodes[node].id === connectedNodeID){
                         // get the value that it passed back from the other node
-                        let passedValue = getPassingValue(nodes, nodes[node])
+                        let passedValue = getPassingValue(nodes, nodes[node], connectedPort)
                         if(i.substring(0, 4) === "item"){
                             let index = i.charAt(i.length - 1)-1
                             // test for item type. eg. string?
@@ -374,11 +512,12 @@ function getPassingValue(nodes, workingOnNode){
             resault.value = '{\n\t' + object + '\n\t}'
         }
 
-        //get_variable
-        if(workingOnNode.type === "get_variable"){
-            resault.type = "variable"
-            resault.value = workingOnNode.inputData.variableName.string
-        }
+        // //get_variable
+        // if(workingOnNode.type.startsWith("get_variable")){
+        //     console.log("workingOnNode 4444",workingOnNode)
+        //     resault.type = "variable"
+        //     //resault.value = workingOnNode.inputData.variableName.userInput
+        // }
 
         
         //upper case first
@@ -387,10 +526,11 @@ function getPassingValue(nodes, workingOnNode){
             resault.value = ""
             if (workingOnNode.connections.inputs.string !== undefined) {
                 let connectedNodeID = workingOnNode.connections.inputs.string[0].nodeId
+                let connectedPort = workingOnNode.connections.inputs.string[0].portName
                 for (let node in nodes){
                     if (nodes[node].id === connectedNodeID){
                         // get the value that it passed back from the other node
-                        let passedValue = getPassingValue(nodes, nodes[node])
+                        let passedValue = getPassingValue(nodes, nodes[node], connectedPort)
                         if (passedValue.value !== ""){
                             resault.value = passedValue.value + ".charAt(0).toUpperCase() + " + passedValue.value + ".slice(1)" 
                         }
@@ -405,10 +545,11 @@ function getPassingValue(nodes, workingOnNode){
             resault.value = ""
             if (workingOnNode.connections.inputs.string !== undefined) {
                 let connectedNodeID = workingOnNode.connections.inputs.string[0].nodeId
+                let connectedPort =  workingOnNode.connections.inputs.string[0].portName
                 for (let node in nodes){
                     if (nodes[node].id === connectedNodeID){
                         // get the value that it passed back from the other node
-                        let passedValue = getPassingValue(nodes, nodes[node])
+                        let passedValue = getPassingValue(nodes, nodes[node], connectedPort)
                         if (passedValue.value !== ""){
                             resault.value = passedValue.value + ".toUpperCase()"
                         }
@@ -423,10 +564,11 @@ function getPassingValue(nodes, workingOnNode){
             resault.value = ""
             if (workingOnNode.connections.inputs.string !== undefined) {
                 let connectedNodeID = workingOnNode.connections.inputs.string[0].nodeId
+                let connectedPort =  workingOnNode.connections.inputs.string[0].portName
                 for (let node in nodes){
                     if (nodes[node].id === connectedNodeID){
                         // get the value that it passed back from the other node
-                        let passedValue = getPassingValue(nodes, nodes[node])
+                        let passedValue = getPassingValue(nodes, nodes[node], connectedPort)
                         if (passedValue.value !== ""){
                             resault.value = passedValue.value + ".trim()"
                         }
@@ -441,9 +583,15 @@ function getPassingValue(nodes, workingOnNode){
             let parentNodeID = workingOnNode.type.slice(13)
             for (let i in nodes){
                 if(nodes[i].id === parentNodeID){
-                    resault.value =  nodes[i].inputData.variableName.string
+                    resault.value =  nodes[i].inputData.variableName.userInput
                 }
             }
+        }
+        
+        // function
+        if(workingOnNode.type.startsWith('function')){
+            resault.type = "variable"
+            resault.value = workingOnNode.inputData['Parameter '+ connectedPort.slice(13) + ' name'].userInput
         }
         
 
@@ -459,72 +607,7 @@ function flowToCode(flowIn){
     let resault = []
     
     let startCodeOut = startNodeToCode(flowIn)
-    resault.push(startCodeOut)
-
-
-
-    
-
-    // for(let i in flowIn) {
-    //     if(flowIn[i].type === 'function'){
-    //         //function
-    //         if (flowIn[i].connections.inputs.powerIn !== undefined ){
-    //             let parentID = flowIn[i].connections.inputs.powerIn[0].nodeId
-    //             let parentNode = flowIn.find(e => e.id === parentID)
-    //             if(parentNode.type === 'export_default'){
-    //                 resault.push("export default function "+ flowIn[i].inputData.functionName.string +' (')
-    //             }
-    //         }else{
-    //             resault.push("function "+ flowIn[i].inputData.functionName.string +' (')
-    //         }
-    //         //params
-    //         let paramCount = 0
-    //         for(let p in flowIn[i].inputData) {
-    //             if(p.startsWith("Parameter")) {
-    //                 if(flowIn[i].inputData[p].string !== "") {
-    //                     if (paramCount > 0) {
-    //                         resault = resault.concat(", " + flowIn[i].inputData[p].string)
-    //                         paramCount += 1 
-    //                     }else{
-    //                         resault = resault.concat(flowIn[i].inputData[p].string)
-    //                         paramCount += 1 
-    //                     }
-    //                 }else{
-    //                     break
-    //                 }
-    //             }
-    //         }
-
-    //         // in the function
-    //         for(let p in flowIn[i].connections.outputs) {
-    //             if(p.startsWith("powerOut")) {
-    //                 if (flowIn[i].connections.outputs[p].nodeId !== undefined ){
-    //                     let nextNodeID = flowIn[i].connections.outputs[p][0].nodeId
-    //                 }
-
-
-
-    //                 console.log("flowIn[i].connections.outputs[p][0].nodeId", flowIn[i].connections.outputs[p][0].nodeId)
-    //                 if(flowIn[i].inputData[p].string !== "") {
-    //                     if (paramCount > 0) {
-    //                         resault = resault.concat(", " + flowIn[i].inputData[p].string)
-    //                         paramCount += 1 
-    //                     }else{
-    //                         resault = resault.concat(flowIn[i].inputData[p].string)
-    //                         paramCount += 1 
-    //                     }
-    //                 }else{
-    //                     break
-    //                 }
-    //             }
-    //         }
-            
-
-
-    //         resault = resault.concat(') {\n\t')
-    //     }
-    // }
-    
+    resault.push(startCodeOut)    
     
 return resault.join("").toString()
 }

@@ -4605,7 +4605,7 @@ var Stage = function Stage(_ref) {
       var variableNameList = [];
       for (var _i2 in variableList) {
         //console.log(variableList)
-        variableNameList.push({ label: variableList[_i2].inputData.variableName.string, value: variableList[_i2].inputData.variableName.string, description: "", sortIndex: _i2, node: { label: "get variable " + variableList[_i2].inputData.variableName.string, value: "get variable " + variableList[_i2].inputData.variableName.string, details: variableList[_i2] } });
+        variableNameList.push({ label: variableList[_i2].inputData.variableName.userInput, value: variableList[_i2].inputData.variableName.userInput, description: "", sortIndex: _i2, node: { label: "get variable " + variableList[_i2].inputData.variableName.userInput, value: "get variable " + variableList[_i2].inputData.variableName.userInput, details: variableList[_i2] } });
       }
 
       setMenuOptions(variableNameList);
@@ -4613,7 +4613,7 @@ var Stage = function Stage(_ref) {
 
       var functionNameList = [];
       for (var _i3 in functionList) {
-        functionNameList.push({ label: functionList[_i3].inputData.functionName.string, value: functionList[_i3].inputData.functionName.string, description: "", sortIndex: _i3, node: { label: "call function " + functionList[_i3].inputData.functionName.string, value: "call function " + functionList[_i3].inputData.functionName.string, details: functionList[_i3] } });
+        functionNameList.push({ label: functionList[_i3].inputData.functionName.userInput, value: functionList[_i3].inputData.functionName.userInput, description: "", sortIndex: _i3, node: { label: "call function " + functionList[_i3].inputData.functionName.userInput, value: "call function " + functionList[_i3].inputData.functionName.userInput, details: functionList[_i3] } });
       }
       setMenuOptions(functionNameList);
     } else if (node.label.startsWith("call function ")) {
@@ -6176,9 +6176,9 @@ var Node = function Node(_ref) {
 
       for (var p in nodeParent.inputData) {
         if (p.startsWith("Parameter")) {
-          if (nodeParent.inputData[p].string !== '') {
+          if (nodeParent.inputData[p].userInput !== '') {
             objToAdd.push(JSON.parse(JSON.stringify(portTypes["variable"])));
-            nameToAdd.push(nodeParent.inputData[p].string);
+            nameToAdd.push(nodeParent.inputData[p].userInput);
           }
         }
       }
@@ -6209,9 +6209,9 @@ var Node = function Node(_ref) {
     }
 
     currentNodeType = nodeTypes["Call function"];
-    currentNodeType.label = "Call function: " + nodeParent.inputData.functionName.string;
-    currentNodeType.name = "Call function: " + nodeParent.inputData.functionName.string;
-    currentNodeType.description = "This node will call the function " + nodeParent.inputData.functionName.string;
+    currentNodeType.label = "Call function: " + nodeParent.inputData.functionName.userInput;
+    currentNodeType.name = "Call function: " + nodeParent.inputData.functionName.userInput;
+    currentNodeType.description = "This node will call the function " + nodeParent.inputData.functionName.userInput;
 
     currentNodeType.inputs = createdInputs(nodeParent);
   } else if (type.startsWith("get variable ")) {
@@ -6225,9 +6225,9 @@ var Node = function Node(_ref) {
     }
 
     currentNodeType = nodeTypes["get variable"];
-    currentNodeType.label = "get variable: " + _nodeParent.inputData.variableName.string;
-    currentNodeType.name = "get variable: " + _nodeParent.inputData.variableName.string;
-    currentNodeType.description = "This node get retrieves the variable " + _nodeParent.inputData.variableName.string;
+    currentNodeType.label = "get variable: " + _nodeParent.inputData.variableName.userInput;
+    currentNodeType.name = "get variable: " + _nodeParent.inputData.variableName.userInput;
+    currentNodeType.description = "This node get retrieves the variable " + _nodeParent.inputData.variableName.userInput;
   } else {
     currentNodeType = nodeTypes[type];
   }
