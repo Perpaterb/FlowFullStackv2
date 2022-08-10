@@ -29,12 +29,35 @@ flowPortAndNodeTypes
   })
 
   .addPortType({
+    type: "number",
+    name: "number",
+    label: "number",
+    noControls: true,
+    color: Colors.green,
+  })
+
+  .addPortType({
     type: "power",
     name: "power",
     label: "Power",
     color: Colors.white,
     noControls: true,
   })
+
+  .addPortType({
+    type: "userInput",
+    name: "userInput",
+    label: "userInput",
+    color: Colors.white,
+    hidePort: true,
+    controls: [
+      Controls.text({
+        name: "userInput",
+        label: "userInput"
+      })
+    ]
+  })
+
   .addPortType({
     type: "boolean",
     name: "boolean",
@@ -67,13 +90,8 @@ flowPortAndNodeTypes
     name: "variable",
     label: "variable",
     acceptTypes: ["string", "variable", "boolean"],
+    noControls: true,
     color: Colors.blue,
-    controls: [
-      Controls.text({
-        name: "variable",
-        label: "variable"
-      })
-    ]
   })
 
   .addPortType({
@@ -121,21 +139,14 @@ flowPortAndNodeTypes
       var parameterCount = 1
       let inputPorts = [
       ports.export({label: "Export", name: "export"}),
-      //ports.power({label: "Power", name: "powerIn"}),
-      ports.string({label: "function name", name: "functionName",hidePort: true})
+      ports.power({label: "Power", name: "powerIn"}),
+      ports.userInput({label: "function name", name: "functionName",hidePort: true})
       ]
       
-      //count parameters
-      // for(var i in connections.outputs) {
-        
-      //   if (i.substring(0, 12) === "parameterOut"){
-      //       parameterCount += 1
-      //   }
-      // }
       for(let i in data){
         for(var a = 1; a < parameterCount+1; a++){
           if (i === "Parameter " + a + " name"){
-            if (data[i].string !== "") {
+            if (data[i].userInput !== "") {
               parameterCount += 1
             }
           }
@@ -145,7 +156,7 @@ flowPortAndNodeTypes
       //add outputs
       let parameterNo = 1
       while (parameterCount >= 1){
-        inputPorts.push(ports.string({label: "Parameter " + parameterNo + " name", name: "Parameter " + parameterNo + " name", hidePort: true,}))
+        inputPorts.push(ports.userInput({label: "Parameter " + parameterNo + " name", name: "Parameter " + parameterNo + " name", hidePort: true,}))
         parameterCount -= 1
         parameterNo += 1
       }
@@ -157,22 +168,33 @@ flowPortAndNodeTypes
       let outputPorts = []
       let powerNo = 1
       let parameterNoForLableSet = 1
-      let powerCount = Object.keys(connections.outputs).length + 1
+      let powerCount = 0
+
+      for (let outs in connections.outputs) {
+        //console.log("outs",outs)
+        if (outs.startsWith('power')){
+          powerCount +=1
+        }
+      }
+
+      //let powerCount = Object.keys(connections.outputs).length + 1
       let reverseKeys = Object.keys(connections.outputs).reverse()
         
       // go through connection in revers order 
       for(let i in reverseKeys) {
-        // decrease the count each non connected outpu found. and stop when you find a connected port.
-        if (Object.keys(connections.outputs[reverseKeys[i]]).length === 0){
-          powerCount -=1
-        } else {
-          break
+          //console.log("reverseKeys", reverseKeys[i])
+        if (reverseKeys[i].startsWith('power')){
+          // decrease the count each non connected outpu found. and stop when you find a connected port.
+          if (Object.keys(connections.outputs[reverseKeys[i]]).length === 0){
+            powerCount -=1
+          } else {
+            break
+          }
         }
-
       }
       
       //add outputs
-      while (powerCount >= 1){
+      while (powerCount >= 0){
         outputPorts.push(ports.power({ label: "Power "+ powerNo, name: "powerOut "+ powerNo}))
         powerCount -= 1
         powerNo += 1
@@ -181,7 +203,7 @@ flowPortAndNodeTypes
       for(let i in data){
         for(var a = 1; a < parameterCount+2; a++){
           if (i === "Parameter " + a + " name"){
-            if (data[i].string !== "") {
+            if (data[i].userInput !== "") {
               parameterCount += 1
             }
           }
@@ -193,10 +215,10 @@ flowPortAndNodeTypes
         let lable = "Parameter " + parameterNoForLableSet
         for(var x in data){
           if (x === "Parameter " + parameterNoForLableSet + " name"){
-            if (data[x].string === "") {
+            if (data[x].userInput === "") {
               lable = "Parameter " + parameterNoForLableSet
             } else {
-              lable = data[x].string
+              lable = data[x].userInput
             }
           }
         }
@@ -235,7 +257,7 @@ flowPortAndNodeTypes
 
   .addNodeType({
     type: "start",
-    label: "start",
+    label: "Sequence",
     addable: false,
     deletable: false,
     description: "The files running",
@@ -424,20 +446,8 @@ flowPortAndNodeTypes
       return inputports
     },
     outputs: ports => [
-      ports.power(),
+      //ports.power(),
       ports.variable({label: "return", name: "return"})
-    ]
-  })
-
-
-  .addNodeType({
-    type: "export_default",
-    label: "export_default",
-    addable: false,
-    deletable: false,
-    description: "Start from here when file is run",
-    outputs: ports => [
-      ports.export({label: "Export", name: "export"})
     ]
   })
 
@@ -447,7 +457,7 @@ flowPortAndNodeTypes
     description: "Set a variable if already created if not create it",
     inputs: ports => [
       ports.power(),
-      ports.string({name: "variableName",label: "variable name", hidePort: true}),
+      ports.userInput({name: "variableName",label: "variable name", hidePort: true}),
       ports.variable(),
     ]
   })
@@ -455,10 +465,48 @@ flowPortAndNodeTypes
   .addNodeType({
     type: "console.log",
     label: "console.log",
-    inputs: ports => [
+    inputs: ports => (data, connections) => {
+      let inputPorts = [
       ports.power(),
-      ports.string({label: "message", acceptTypes: ["variable", "string","boolean"],})
-    ],
+      ]
+  
+    let stringCount = 0
+    let stringNo = 1 
+
+    
+    for (let ins in connections.inputs) {
+      //console.log("outs",outs)
+      if (ins.startsWith('string')){
+        stringCount +=1
+      }
+    }
+
+    let reorder = []
+    for (let order in connections.inputs){
+        if (order.startsWith('string')){
+            reorder.push([order, connections.inputs[order]])
+
+        }
+    }
+
+    reorder.sort(function(a, b){
+        return a[0].slice(6) - b[0].slice(6)
+    })
+
+    
+    reorder = reorder.reverse()
+      
+    stringCount = Number(reorder[0][0].slice(6))
+
+    //add string imputs
+    while (stringCount >= 0){
+      //ports.string({noControls: true})
+      inputPorts.push(ports.string({noControls: true, name: "string"+ stringNo, label: "string "+ stringNo}))
+      stringCount -= 1
+      stringNo += 1
+    }
+      return inputPorts
+    },
   })
 
   .addNodeType({
@@ -524,14 +572,14 @@ flowPortAndNodeTypes
   })
 
   .addNodeType({
-    type: "integer",
-    label: "integer",
-    description: "non desimal number",
+    type: "number",
+    label: "number",
+    description: "a number number",
     inputs: ports => [
-      ports.variable({label: " ",hidePort: true}),
+      ports.userInput({label: " ",hidePort: true}),
     ],
     outputs: ports => [
-      ports.variable({label: "integer"})
+      ports.number({label: "number"})
     ]
   })
 
@@ -540,8 +588,8 @@ flowPortAndNodeTypes
     label: "add",
     description: "add 2 numbers together",
     inputs: ports => [
-      ports.variable({name: "variable1", label: "Number 1"}),
-      ports.variable({name: "variable2", label: "Number 2"}),
+      ports.number({name: "number1", label: "Number 1"}),
+      ports.number({name: "number2", label: "Number 2"}),
     ],
     outputs: ports => [
       ports.variable({label: "variable"})
@@ -566,8 +614,8 @@ flowPortAndNodeTypes
     label: "concatenate",
     description: "Join 2 string together",
     inputs: ports => [
-      ports.string({name: "string1", label: "string 1"}),
-      ports.string({name: "string2", label: "string 2"}),
+      ports.string({name: "string1", label: "string 1", noControls: true}),
+      ports.string({name: "string2", label: "string 2", noControls: true}),
     ],
     outputs: ports => [
       ports.string({label: "stringout", name: "string out"}),

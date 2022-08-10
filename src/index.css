@@ -5,6 +5,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
 }
 
 #app {
@@ -14,12 +15,17 @@ body {
   font-family: "IBM Plex Sans", sans-serif;
 }
 
-#FlowFullApp {
-  height: 100vh;
-  width: 100vw;
+#code {
+  display: flex;
   margin: 0;
   font-family: "IBM Plex Sans", sans-serif;
 }
+
+#root {
+  height: 100%;
+  width: 100%;
+}
+
 
 .replace-button::before {
   content: "Replace";
@@ -58,7 +64,7 @@ background: rgb(237, 238, 182);
 background: rgb(247, 138, 138);
 }
 
-.start {
+.Sequence {
 background: rgb(245, 197, 125);
 }
 
